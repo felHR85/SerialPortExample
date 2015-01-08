@@ -1,5 +1,6 @@
 package com.felhr.serialportexample;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,8 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 
 public class UsbService extends Service
@@ -33,8 +36,12 @@ public class UsbService extends Service
 	public static final String ACTION_USB_DEVICE_NOT_WORKING = "com.felhr.connectivityservices.ACTION_USB_DEVICE_NOT_WORKING";
 	
 	private static final int BAUD_RATE = 9600; // BaudRate. Change thsi value if you need
+	private static final int MESSAGE_FROM_SERIAL_PORT = 0;
+	
+	private IBinder binder = new UsbBinder();
 	
 	private Context context;
+	private Handler mHandler;
 	private UsbManager usbManager;
 	private UsbDevice device;
 	private UsbDeviceConnection connection;
@@ -53,11 +60,40 @@ public class UsbService extends Service
 		findSerialPortDevice();
 	}
 	
+	/* MUST READ about services
+	 * http://developer.android.com/guide/components/services.html
+	 * http://developer.android.com/guide/components/bound-services.html
+	 */
 	@Override
 	public IBinder onBind(Intent intent) 
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return binder;
+	}
+	
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId)
+	{
+		return Service.START_NOT_STICKY;
+	}
+	
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+	}
+	
+	/*
+	 * This function will be called from MainActivity to write data through Serial Port
+	 */
+	public void write(byte[] data)
+	{
+		if(serialPort != null)
+			serialPort.write(data);
+	}
+	
+	public void setHandler(Handler mHandler)
+	{
+		this.mHandler = mHandler;
 	}
 	
 	private void findSerialPortDevice()
@@ -116,15 +152,40 @@ public class UsbService extends Service
 		usbManager.requestPermission(device, mPendingIntent);
 	}
 	
+	/*
+	 *  Data received from serial port will be received here. Just populate onReceivedData with your code
+	 *  In this particular example. byte stream is converted to String and send to UI thread to
+	 *  be treated there.
+	 */
 	private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() 
 	{
 		@Override
 		public void onReceivedData(byte[] arg0) 
 		{
-			
+			try 
+			{
+				String data = new String(arg0, "UTF-8");
+				if(mHandler != null)
+					mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT,data).sendToTarget(); 
+			} catch (UnsupportedEncodingException e)
+			{
+				e.printStackTrace();
+			}
 		}
 	};
 	
+	public class UsbBinder extends Binder
+	{
+		public UsbService getService()
+		{
+			return UsbService.this;
+		}
+	}
+	
+	/*
+	 * Different notifications from OS will be received here (USB attached, detached, permission responses...)
+	 * About BroadcastReceiver: http://developer.android.com/reference/android/content/BroadcastReceiver.html
+	 */
 	private final BroadcastReceiver usbReceiver = new BroadcastReceiver()
 	{
 		@Override

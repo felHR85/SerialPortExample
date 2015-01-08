@@ -7,6 +7,8 @@
     <uses-sdk
         android:minSdkVersion="12"
         android:targetSdkVersion="21" />
+    <uses-feature android:name="android.hardware.usb.host"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -22,6 +24,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+         <service
+            android:name="com.felhr.serialportexample.UsbService"
+            android:enabled="true" >
+        </service>
     </application>
 
 </manifest>
