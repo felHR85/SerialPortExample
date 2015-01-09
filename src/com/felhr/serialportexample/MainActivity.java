@@ -52,7 +52,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 	{
     	super.onResume();
     	setFilters();  // Start listening notifications from UsbService
-        startService(UsbService.class, usbConnection, null); // Start UsbService and Bind it
+        startService(UsbService.class, usbConnection, null); // Start UsbService(if it was not started before) and Bind it
 	}
     
     @Override
