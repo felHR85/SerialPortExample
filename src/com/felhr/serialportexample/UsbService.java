@@ -38,6 +38,8 @@ public class UsbService extends Service
 	private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
 	public static final int MESSAGE_FROM_SERIAL_PORT = 0;
 	
+	public static boolean SERVICE_CONNECTED = false;
+	
 	private IBinder binder = new UsbBinder();
 	
 	private Context context;
@@ -55,6 +57,7 @@ public class UsbService extends Service
 	public void onCreate()
 	{
 		this.context = this;
+		UsbService.SERVICE_CONNECTED = true;
 		setFilter();
 		usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		findSerialPortDevice();
@@ -80,6 +83,7 @@ public class UsbService extends Service
 	public void onDestroy()
 	{
 		super.onDestroy();
+		UsbService.SERVICE_CONNECTED = false;
 	}
 	
 	/*
@@ -111,7 +115,6 @@ public class UsbService extends Service
 				if(deviceVID != 0x1d6b || (devicePID != 0x0001 || devicePID != 0x0002 || devicePID != 0x0003))
 				{
 					// There is a device connected to our Android device. Try to open it as a Serial Port.
-					connection = usbManager.openDevice(device);
 					requestUserPermission();
 					keep = false;  
 				}else
@@ -201,6 +204,7 @@ public class UsbService extends Service
 				{
 					Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
 					arg0.sendBroadcast(intent);
+					connection = usbManager.openDevice(device);
 					new ConnectionThread().run();
 				}else // User not accepted our USB connection. Send an Intent to the Main Activity
 				{

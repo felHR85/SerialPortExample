@@ -45,10 +45,22 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         editText = (EditText) findViewById(R.id.editText1);
         sendButton = (Button) findViewById(R.id.buttonSend);
         sendButton.setOnClickListener(this);
-        
-        setFilters();
-        
-        startService(UsbService.class, usbConnection, null);
+    }
+    
+    @Override
+	public void onResume()
+	{
+    	super.onResume();
+    	setFilters();  // Start listening notifications from UsbService
+        startService(UsbService.class, usbConnection, null); // Start UsbService and Bind it
+	}
+    
+    @Override
+    public void onPause()
+    {
+    	super.onPause();
+    	unregisterReceiver(mUsbReceiver);
+    	unbindService(usbConnection);
     }
 
 
@@ -78,25 +90,30 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 	@Override
 	public void onClick(View v) 
 	{
-		String data = editText.getText().toString();
-		editText.setText("");
-		if(usbService != null)
-			usbService.write(data.getBytes());
+		if(!editText.getText().toString().equals(""))
+		{
+			String data = editText.getText().toString();
+			if(usbService != null) // if UsbService was correctly binded, Send data
+				usbService.write(data.getBytes());
+		}
 	}
 	
 	private void startService(Class<?> service, ServiceConnection serviceConnection, Bundle extras)
 	{
-		Intent startService = new Intent(this, service);
-		if(extras != null && !extras.isEmpty())
+		if(UsbService.SERVICE_CONNECTED == false)
 		{
-			Set<String> keys = extras.keySet();
-			for(String key: keys)
+			Intent startService = new Intent(this, service);
+			if(extras != null && !extras.isEmpty())
 			{
-				String extra = extras.getString(key);
-				startService.putExtra(key, extra);
+				Set<String> keys = extras.keySet();
+				for(String key: keys)
+				{
+					String extra = extras.getString(key);
+					startService.putExtra(key, extra);
+				}
 			}
+			startService(startService);
 		}
-		startService(startService);
 		Intent bindingIntent = new Intent(this, service);
 		bindService(bindingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 	}
@@ -112,6 +129,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 		registerReceiver(mUsbReceiver, filter);
 	}
 	
+	/*
+	 * This handler will be passed to UsbService. Dara received from serial port is displayed through this handler
+	 */
 	private static class MyHandler extends Handler 
 	{
 		private final WeakReference<MainActivity> mActivity;
@@ -133,7 +153,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 			}
 		}
 	}
-
+	
+	/*
+	 * Notifications from UsbService will be received here.
+	 */
 	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() 
 	{
 		@Override
