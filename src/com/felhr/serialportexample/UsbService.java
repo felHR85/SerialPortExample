@@ -3,6 +3,7 @@ package com.felhr.serialportexample;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
@@ -49,6 +50,8 @@ public class UsbService extends Service
 	private UsbDeviceConnection connection;
 	private UsbSerialDevice serialPort;
 	
+	private boolean serialPortConnected;
+	
 	/*
 	 * onCreate will be executed when service is started. It configures an IntentFilter to listen for
 	 * incoming Intents (USB ATTACHED, USB DETACHED...) and it tries to open a serial port.
@@ -57,6 +60,7 @@ public class UsbService extends Service
 	public void onCreate()
 	{
 		this.context = this;
+		serialPortConnected = false;
 		UsbService.SERVICE_CONNECTED = true;
 		setFilter();
 		usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
@@ -205,6 +209,7 @@ public class UsbService extends Service
 					Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
 					arg0.sendBroadcast(intent);
 					connection = usbManager.openDevice(device);
+					serialPortConnected = true;
 					new ConnectionThread().run();
 				}else // User not accepted our USB connection. Send an Intent to the Main Activity
 				{
@@ -213,12 +218,15 @@ public class UsbService extends Service
 				}
 			}else if(arg1.getAction().equals(ACTION_USB_ATTACHED))
 			{
-				findSerialPortDevice(); // A USB device has been attached. Try to open it as a Serial port
+				if(!serialPortConnected)
+					findSerialPortDevice(); // A USB device has been attached. Try to open it as a Serial port
 			}else if(arg1.getAction().equals(ACTION_USB_DETACHED))
 			{
 				// Usb device was disconnected. send an intent to the Main Activity
 				Intent intent = new Intent(ACTION_USB_DISCONNECTED);
 				arg0.sendBroadcast(intent);
+				serialPortConnected = false;
+				serialPort.close();
 			}
 		}
 	};
