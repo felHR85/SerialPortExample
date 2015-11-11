@@ -21,6 +21,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 public class UsbService extends Service
 {
@@ -116,7 +117,8 @@ public class UsbService extends Service
 				device = entry.getValue();
 				int deviceVID = device.getVendorId();
 				int devicePID = device.getProductId();
-				if(deviceVID != 0x1d6b || (devicePID != 0x0001 || devicePID != 0x0002 || devicePID != 0x0003))
+			
+				if(deviceVID != 0x1d6b && (devicePID != 0x0001 || devicePID != 0x0002 || devicePID != 0x0003))
 				{
 					// There is a device connected to our Android device. Try to open it as a Serial Port.
 					requestUserPermission();
