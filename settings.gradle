@@ -1,0 +1,2 @@
+include ':example', ':usbserial'
+project(':usbserial').projectDir = new File('../UsbSerial/usbserial')
