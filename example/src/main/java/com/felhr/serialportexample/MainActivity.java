@@ -78,9 +78,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!editText.getText().toString().equals("")) {
-                    String data = editText.getText().toString() + "\n";
+                    String data = editText.getText().toString();
                     if (usbService != null) { // if UsbService was correctly binded, Send data
-                        display.append("> " + data);
+                        display.append(data);
                         usbService.write(data.getBytes());
                     }
                 }
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
             switch (msg.what) {
                 case UsbService.MESSAGE_FROM_SERIAL_PORT:
                     String data = (String) msg.obj;
-                    mActivity.get().display.append("< " + data);
+                    mActivity.get().display.append(data);
                     break;
             }
         }
