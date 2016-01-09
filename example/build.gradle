@@ -25,5 +25,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:design:23.1.1'
 
-    compile 'com.github.felHR85:UsbSerial:v3.2'
+    compile 'com.github.felHR85:UsbSerial:3.3'
 }
