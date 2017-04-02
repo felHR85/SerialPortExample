@@ -10,6 +10,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 
@@ -46,6 +47,8 @@ public class UsbService extends Service {
     private UsbDevice device;
     private UsbDeviceConnection connection;
     private UsbSerialDevice serialPort;
+    private boolean mLogging = false;
+    private FileLogger mLogger;
 
     private boolean serialPortConnected;
     /*
@@ -58,8 +61,10 @@ public class UsbService extends Service {
         public void onReceivedData(byte[] arg0) {
             try {
                 String data = new String(arg0, "UTF-8");
-                if (mHandler != null)
+                if (mHandler != null) {
                     mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, data).sendToTarget();
+                    LogToFile(data);
+                }
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -137,8 +142,9 @@ public class UsbService extends Service {
      * This function will be called from MainActivity to write data through Serial Port
      */
     public void write(byte[] data) {
-        if (serialPort != null)
+        if (serialPort != null) {
             serialPort.write(data);
+        }
     }
 
     public void setHandler(Handler mHandler) {
@@ -201,6 +207,30 @@ public class UsbService extends Service {
         }
     }
 
+    /*
+     * Toggle the logging mode. If previously logging, stop logging, otherwise start logging
+     * to filename prepended with a date. If a failure occurs starting to log, return false.
+     */
+    public boolean ToggleLog(String path, String filename) {
+        mLogging = !mLogging;
+        if (mLogging) {
+            if (mLogger == null) {
+                mLogger = new FileLogger(path, filename);
+            } else {
+                mLogger.NewFile(path, filename);
+            }
+        }
+        return mLogging;
+    }
+
+    private void LogToFile(String data)
+    {
+        try {
+            if (mLogging) {
+                mLogger.appendLog(data);
+            }
+        } catch (Exception ex) {}
+    }
     /*
      * A simple thread to open a serial port.
      * Although it should be a fast operation. moving usb operations away from UI thread is a good thing.
