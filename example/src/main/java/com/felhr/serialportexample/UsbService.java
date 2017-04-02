@@ -35,6 +35,7 @@ public class UsbService extends Service {
     public static final String ACTION_CDC_DRIVER_NOT_WORKING = "com.felhr.connectivityservices.ACTION_CDC_DRIVER_NOT_WORKING";
     public static final String ACTION_USB_DEVICE_NOT_WORKING = "com.felhr.connectivityservices.ACTION_USB_DEVICE_NOT_WORKING";
     public static final int MESSAGE_FROM_SERIAL_PORT = 0;
+    public static final int MESSAGE_USB_DEVICE_INFORMATION = 1;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
@@ -162,6 +163,10 @@ public class UsbService extends Service {
                 int devicePID = device.getProductId();
 
                 if (deviceVID != 0x1d6b && (devicePID != 0x0001 || devicePID != 0x0002 || devicePID != 0x0003)) {
+                    if (mHandler != null) {
+                        String info = String.format("VID: 0x%04x, PID: 0x%04x", deviceVID, devicePID);
+                        mHandler.obtainMessage(MESSAGE_USB_DEVICE_INFORMATION, info).sendToTarget();
+                    }
                     // There is a device connected to our Android device. Try to open it as a Serial Port.
                     requestUserPermission();
                     keep = false;
