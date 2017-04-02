@@ -23,6 +23,9 @@
         android:layout_height="150dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="34dp"
+        android:scrollbars = "vertical"
+        android:gravity="bottom"
+        android:maxLength="20000"
         android:background="#FFFFFF"/>
 
     <EditText
