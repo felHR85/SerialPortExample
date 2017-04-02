@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case UsbService.MESSAGE_USB_DEVICE_INFORMATION:
                     String info = (String) msg.obj;
-                    mActivity.get().infoDisplay.append(info + "\n");
+                    addNewText(mActivity.get().infoDisplay, info + "\n");
                     break;
             }
         }
