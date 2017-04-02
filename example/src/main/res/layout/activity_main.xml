@@ -23,15 +23,30 @@
         android:layout_height="150dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="34dp"
+        android:scrollbars = "vertical"
+        android:gravity="bottom"
+        android:maxLength="20000"
         android:background="#FFFFFF"/>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:scrollbars = "vertical"
+        android:layout_below="@+id/textView1"
+        android:gravity="bottom"
+        android:maxLength="20000"
+        android:background="#FFFFF0"/>
 
     <EditText
         android:id="@+id/editText1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textView1"
-        android:layout_alignRight="@+id/textView1"
-        android:layout_below="@+id/textView1"
+        android:layout_alignLeft="@+id/textView2"
+        android:layout_alignRight="@+id/textView2"
+        android:layout_below="@+id/textView2"
         android:layout_marginTop="28dp"
         android:ems="10">
 
@@ -46,6 +61,14 @@
         android:layout_alignLeft="@+id/editText1"
         android:layout_alignRight="@+id/editText1"
         android:layout_below="@+id/editText1"
-        android:layout_marginTop="42dp"
         android:text="Send"/>
+    <Button
+        android:id="@+id/buttonLog"
+        style="?borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editText1"
+        android:layout_alignRight="@+id/editText1"
+        android:layout_below="@+id/buttonSend"
+        android:text="Start Logging"/>
 </RelativeLayout>

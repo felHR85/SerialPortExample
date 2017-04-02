@@ -7,10 +7,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -49,8 +52,10 @@ public class MainActivity extends AppCompatActivity {
     };
     private UsbService usbService;
     private TextView display;
+    private TextView infoDisplay;
     private EditText editText;
     private MyHandler mHandler;
+    private Button mLogButton;
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName arg0, IBinder arg1) {
@@ -72,17 +77,34 @@ public class MainActivity extends AppCompatActivity {
         mHandler = new MyHandler(this);
 
         display = (TextView) findViewById(R.id.textView1);
+        display.setMovementMethod(new ScrollingMovementMethod());
+        infoDisplay = (TextView) findViewById(R.id.textView2);
+        infoDisplay.setMovementMethod(new ScrollingMovementMethod());
         editText = (EditText) findViewById(R.id.editText1);
         Button sendButton = (Button) findViewById(R.id.buttonSend);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!editText.getText().toString().equals("")) {
+                    // Convert to string and add \r to \n
                     String data = editText.getText().toString();
                     if (usbService != null) { // if UsbService was correctly binded, Send data
                         display.append(data);
                         usbService.write(data.getBytes());
                     }
+                }
+            }
+        });
+        mLogButton = (Button) findViewById(R.id.buttonLog);
+        mLogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String extStorage = Environment.getExternalStorageDirectory().getPath();
+                boolean logging = usbService.ToggleLog(extStorage, "serial.log");
+                if (logging) {
+                    mLogButton.setText("Stop incoming log \n(" + extStorage + "/" + "<datetime>-serial.log" + ")");
+                } else {
+                    mLogButton.setText("Log incoming");
                 }
             }
         });
@@ -133,6 +155,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private static class MyHandler extends Handler {
         private final WeakReference<MainActivity> mActivity;
+        private int MAX_VIEW_LINES = 100;
+        private int MAX_SINGLE_LINE_LENGTH = 500;
 
         public MyHandler(MainActivity activity) {
             mActivity = new WeakReference<>(activity);
@@ -142,9 +166,35 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case UsbService.MESSAGE_FROM_SERIAL_PORT:
-                    String data = (String) msg.obj;
-                    mActivity.get().display.append(data);
+                    addNewText(mActivity.get().display, (String)msg.obj);
                     break;
+                case UsbService.MESSAGE_USB_DEVICE_INFORMATION:
+                    String info = (String) msg.obj;
+                    addNewText(mActivity.get().infoDisplay, info + "\n");
+                    break;
+            }
+        }
+
+        /*
+         * Add the new text to the given TextView, ensuring the maximum number of lines
+         * is maintained. This is to avoid performance loss when large amounts of data is
+         * received from the serial port.
+         * Also if there are no new lines, limit the length, as very long lines really
+         * slow down appends.
+         */
+        private void addNewText(TextView display, String newText) {
+            display.append(newText);
+            int linesToRemove = display.getLineCount() - MAX_VIEW_LINES;
+            int length = display.getText().length();
+            if (linesToRemove > 0) {
+                Editable text = display.getEditableText();
+                int lineStart = display.getLayout().getLineStart(0);
+                int lineEnd = display.getLayout().getLineEnd(linesToRemove);
+                text.delete(lineStart, lineEnd);
+            } else if (length > MAX_SINGLE_LINE_LENGTH) {
+                Editable text = display.getEditableText();
+                int start = length - MAX_SINGLE_LINE_LENGTH;
+                text.delete(0, start - 1);
             }
         }
     }
