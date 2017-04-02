@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
     private static class MyHandler extends Handler {
         private final WeakReference<MainActivity> mActivity;
         private int MAX_VIEW_LINES = 100;
+        private int MAX_SINGLE_LINE_LENGTH = 500;
 
         public MyHandler(MainActivity activity) {
             mActivity = new WeakReference<>(activity);
@@ -178,15 +179,22 @@ public class MainActivity extends AppCompatActivity {
          * Add the new text to the given TextView, ensuring the maximum number of lines
          * is maintained. This is to avoid performance loss when large amounts of data is
          * received from the serial port.
+         * Also if there are no new lines, limit the length, as very long lines really
+         * slow down appends.
          */
         private void addNewText(TextView display, String newText) {
-            mActivity.get().display.append(newText);
+            display.append(newText);
             int linesToRemove = display.getLineCount() - MAX_VIEW_LINES;
+            int length = display.getText().length();
             if (linesToRemove > 0) {
                 Editable text = display.getEditableText();
                 int lineStart = display.getLayout().getLineStart(0);
                 int lineEnd = display.getLayout().getLineEnd(linesToRemove);
                 text.delete(lineStart, lineEnd);
+            } else if (length > MAX_SINGLE_LINE_LENGTH) {
+                Editable text = display.getEditableText();
+                int start = length - MAX_SINGLE_LINE_LENGTH;
+                text.delete(0, start - 1);
             }
         }
     }
